@@ -11,7 +11,7 @@ const CATEGORIES = [
       { id: "monogram", name: "Monograma / Logo de la boda", desc: "Con silueta de Toto integrada" },
       { id: "add_calendar", name: "Botón 'Añadir al calendario'", desc: "Google Calendar, iCal, Outlook" },
       { id: "music_bg", name: "Música de fondo", desc: "Canción significativa de la pareja" },
-      { id: "lang_toggle", name: "Selector de idioma ES/EN", desc: "Imprescindible para invitados venezolanos e internacionales" },
+
     ],
   },
   {
