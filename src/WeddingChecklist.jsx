@@ -8,7 +8,7 @@ const CATEGORIES = [
       { id: "hero_photo", name: "Foto/vídeo principal de la pareja", desc: "Imagen hero a pantalla completa" },
       { id: "countdown", name: "Cuenta atrás", desc: "Días, horas, minutos hasta el 7 de abril" },
       { id: "hashtag", name: "Hashtag de boda", desc: "Ej: #DaniYÁngel, #ElTrucoFinal" },
-      { id: "monogram", name: "Monograma / Logo de la boda", desc: "Con silueta de Toto integrada" },
+      { id: "monogram", name: "Monograma / Logo de la boda", desc: "esto ya lo teneis chachis" },
       { id: "add_calendar", name: "Botón 'Añadir al calendario'", desc: "Google Calendar, iCal, Outlook" },
       { id: "music_bg", name: "Música de fondo", desc: "Canción significativa de la pareja" },
 
@@ -54,6 +54,10 @@ const CATEGORIES = [
       { id: "rsvp_reminders", name: "Recordatorios automáticos", desc: "Email/SMS a quien no ha respondido" },
       { id: "guest_dashboard", name: "Panel de gestión de invitados", desc: "Dashboard con estadísticas y exportación" },
       { id: "seating", name: "Buscador 'Encuentra tu mesa'", desc: "Cada invitado busca su asiento" },
+      { id: "rsvp_plus_one", name: "Acompañante / Plus-one", desc: "Invitado decide si lleva plus-one y rellena sus datos" },
+      { id: "rsvp_confirmation_msg", name: "Mensaje de 'respuesta enviada'", desc: "Pantalla de confirmación tras el envío" },
+      { id: "rsvp_email_verify", name: "Verificación por email", desc: "Mail al invitado confirmando su RSVP" },
+      { id: "rsvp_contact", name: "Contacto directo desde RSVP", desc: "Enlace para escribirnos dudas al confirmar" },
     ],
   },
   {
@@ -80,6 +84,7 @@ const CATEGORIES = [
       { id: "airport", name: "Info de aeropuerto/transporte público", desc: "Barajas, metro, cercanías" },
       { id: "madrid_guide", name: "Guía 'Qué hacer en Madrid'", desc: "Restaurantes, bares y planes favoritos" },
       { id: "visa_info", name: "Info de visados", desc: "Para invitados venezolanos/internacionales" },
+      { id: "rideshare", name: "Integración con Uber/Lyft/Cabify", desc: "Enlaces directos para pedir coche al venue" },
     ],
   },
   {
@@ -140,6 +145,7 @@ const CATEGORIES = [
       { id: "predictions", name: "Predicciones", desc: "¿Quién llorará primero? ¿Habrá tartazo?" },
       { id: "bingo", name: "Bingo de boda digital", desc: "Casillas: 'primeras lágrimas', 'chiste del padrino'..." },
       { id: "scavenger", name: "Búsqueda del tesoro QR", desc: "Pistas por el venue con fun facts" },
+      { id: "language_mini_section", name: "Mini-sección 'Aprende a hablar como nosotros'", desc: "Frases venezolanas y españolas divertidas" },
     ],
   },
   {
@@ -590,9 +596,11 @@ export default function WeddingChecklist() {
       `}</style>
 
       <div className="checklist-header">
-        <h1 className="checklist-title">Dani & Ángel</h1>
+        <h1 className="checklist-title">Dani & Ángel para evitar que J se vuelva loco</h1>
         <p className="checklist-subtitle">
           Checklist de la web de boda — Toca cada elemento para marcar Sí / Quizás / No
+          Abajo tienes la opcion de guardar y cargar.
+          Si guardas, se te genera un fichero que puedes cargar mas tarde para seguir editando las opciones y poder guardarlo de nuevo mas tarde.
         </p>
         <div className="progress-bar-outer">
           <div className="progress-bar-inner" style={{ width: `${pctDone}%` }} />
