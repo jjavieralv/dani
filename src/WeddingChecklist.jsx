@@ -235,31 +235,102 @@ export default function WeddingChecklist() {
 
   const pctDone = Math.round(((total - counts.unset) / total) * 100);
 
-  const [showExport, setShowExport] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [importMsg, setImportMsg] = useState(null);
+
+  const STATUS_FROM_LABEL = {
+    "sí": "yes", "si": "yes", "yes": "yes",
+    "quizás": "maybe", "quizas": "maybe", "maybe": "maybe",
+    "no": "no",
+    "sin decidir": "unset", "unset": "unset", "—": "unset", "": "unset",
+  };
 
   const generateCSV = () => {
-    const header = "Categoría,Elemento,Descripción,Decisión";
+    const header = "ID,Categoría,Elemento,Descripción,Decisión";
     const rows = CATEGORIES.flatMap((cat) =>
       cat.items.map((item) => {
         const st = statuses[item.id] || "unset";
         const label = st === "yes" ? "Sí" : st === "maybe" ? "Quizás" : st === "no" ? "No" : "Sin decidir";
-        const esc = (s) => `"${s.replace(/"/g, '""')}"`;
-        return [esc(cat.title), esc(item.name), esc(item.desc), esc(label)].join(",");
+        const esc = (s) => `"${String(s).replace(/"/g, '""')}"`;
+        return [esc(item.id), esc(cat.title), esc(item.name), esc(item.desc), esc(label)].join(",");
       })
     );
     return [header, ...rows].join("\n");
   };
 
-  const handleCopy = () => {
-    const csv = generateCSV();
-    navigator.clipboard.writeText(csv).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }).catch(() => {
-      const ta = document.querySelector(".csv-textarea");
-      if (ta) { ta.select(); document.execCommand("copy"); setCopied(true); setTimeout(() => setCopied(false), 2000); }
-    });
+  const formatTimestamp = () => {
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`;
+  };
+
+  const handleDownload = () => {
+    const csv = "\uFEFF" + generateCSV();
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `dani-angel-checklist_${formatTimestamp()}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const parseCSV = (text) => {
+    const rows = [];
+    let cur = [], field = "", inQ = false;
+    const s = text.replace(/^\uFEFF/, "");
+    for (let i = 0; i < s.length; i++) {
+      const c = s[i];
+      if (inQ) {
+        if (c === '"') {
+          if (s[i + 1] === '"') { field += '"'; i++; } else { inQ = false; }
+        } else field += c;
+      } else {
+        if (c === '"') inQ = true;
+        else if (c === ",") { cur.push(field); field = ""; }
+        else if (c === "\n") { cur.push(field); rows.push(cur); cur = []; field = ""; }
+        else if (c === "\r") { /* skip */ }
+        else field += c;
+      }
+    }
+    if (field.length || cur.length) { cur.push(field); rows.push(cur); }
+    return rows.filter((r) => r.length && r.some((f) => f !== ""));
+  };
+
+  const handleImport = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const rows = parseCSV(String(ev.target.result || ""));
+        if (!rows.length) throw new Error("CSV vacío");
+        const [header, ...data] = rows;
+        const idIdx = header.findIndex((h) => /^id$/i.test(h.trim()));
+        const decIdx = header.findIndex((h) => /decisi[oó]n|decision/i.test(h.trim()));
+        if (idIdx === -1 || decIdx === -1) throw new Error("Faltan columnas ID o Decisión");
+        const validIds = new Set(CATEGORIES.flatMap((c) => c.items.map((i) => i.id)));
+        const next = {};
+        let loaded = 0;
+        for (const row of data) {
+          const id = (row[idIdx] || "").trim();
+          const dec = (row[decIdx] || "").trim().toLowerCase();
+          if (!validIds.has(id)) continue;
+          const st = STATUS_FROM_LABEL[dec] ?? "unset";
+          next[id] = st;
+          loaded++;
+        }
+        setStatuses(next);
+        setImportMsg(`✓ Cargado (${loaded} elementos)`);
+      } catch (err) {
+        setImportMsg(`✗ Error: ${err.message}`);
+      } finally {
+        e.target.value = "";
+        setTimeout(() => setImportMsg(null), 3000);
+      }
+    };
+    reader.readAsText(file);
   };
 
   return (
@@ -610,35 +681,26 @@ export default function WeddingChecklist() {
         <br />
         Cuando termines, dime qué habéis decidido y monto la web final 🪄
         <br />
-        <button className="export-btn" onClick={() => { setCopied(false); setShowExport(true); }}>
-          📄 Exportar decisiones a CSV
-        </button>
-      </div>
-
-      {showExport && (
-        <div className="modal-overlay" onClick={() => setShowExport(false)}>
-          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-title">Exportar checklist</div>
-            <div className="modal-desc">
-              Copia el contenido y pégalo en un archivo .csv, o directamente en Google Sheets / Excel.
-            </div>
-            <textarea
-              className="csv-textarea"
-              readOnly
-              value={generateCSV()}
-              onFocus={(e) => e.target.select()}
+        <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap", marginTop: 4 }}>
+          <button className="export-btn" onClick={handleDownload}>
+            📥 Descargar CSV
+          </button>
+          <label className="export-btn" style={{ cursor: "pointer" }}>
+            📤 Cargar CSV
+            <input
+              type="file"
+              accept=".csv,text/csv"
+              onChange={handleImport}
+              style={{ display: "none" }}
             />
-            <div className="modal-actions">
-              <button className="modal-btn-secondary" onClick={() => setShowExport(false)}>
-                Cerrar
-              </button>
-              <button className="export-btn" style={{ marginTop: 0 }} onClick={handleCopy}>
-                {copied ? "✓ Copiado!" : "Copiar al portapapeles"}
-              </button>
-            </div>
-          </div>
+          </label>
         </div>
-      )}
+        {importMsg && (
+          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#5b3a6e", marginTop: 10 }}>
+            {importMsg}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
